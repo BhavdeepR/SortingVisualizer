@@ -93,6 +93,67 @@ export function doInsertionSort (array) {
     }
 
   }
-  console.log(array);
   return animations;
 }
+
+export function doQuickSort(array){
+  const animations = [];
+  quickSortHelper(array, 0, array.length - 1, animations);
+  return animations;
+}
+
+
+function quickSortHelper(array, startIdx, endIdx, animations){
+  if(endIdx <= startIdx) return;
+  let pivotIdx = partition(array, startIdx, endIdx, animations)
+  quickSortHelper(array, startIdx, pivotIdx - 1, animations);
+  quickSortHelper(array, pivotIdx + 1, endIdx, animations);
+  return;
+}
+
+function partition(array, startIdx, endIdx, animations){
+  let pivotIdx = startIdx;
+  let i = startIdx;
+  let j = endIdx + 1;
+  // const barOneStyle = arrayBars[i].style;
+  // const barTwoStyle = arrayBars[--j].style;
+
+  while (true){
+    //iterate from left to right side of array as long as value are less than pivot value
+    while(array[++i] < array[pivotIdx]){
+      animations.push({type: "compare", indices: [i, pivotIdx]});
+      animations.push({type: "compare", indices: [i, pivotIdx]});
+      if(i === endIdx) break;
+      // barOneStyle.backgroundColor = 'red';
+      // await sleep(animationSpeed);
+      // barOneStyle.backgroundColor = 'turquoise';
+    }
+    //iterate from right to left side of array as long as values are greater than pivot value
+    while(array[--j] > array[pivotIdx]){
+      animations.push({type: "compare", indices: [j, pivotIdx]});
+      animations.push({type: "compare", indices: [j, pivotIdx]});
+      if(j === pivotIdx) break;
+      // barTwoStyle.backgroundColor = 'red';
+      // await sleep(animationSpeed);
+      // barTwoStyle.backgroundColor = 'turquoise';
+    }
+
+    if(j <= i) break;
+    swap(array, i, j);
+    animations.push({type: "swap", indices: [i, j], heights: [array[i], array[j]]})
+  }
+  swap(array, pivotIdx, j)
+  animations.push({type: "swap", indices: [pivotIdx, j], heights: [array[pivotIdx], array[j]]})
+  return j;
+}
+
+function swap(array, firstIdx, secondIdx){
+  let temp = array[firstIdx];
+  array[firstIdx] = array[secondIdx];
+  // barOneStyle.height = `${array[firstIdx]}px`;
+  // await sleep(animationSpeed);
+  array[secondIdx] = temp;
+  // barTwoStyle.height = `${array[secondIdx]}px`;
+  return array;
+}
+

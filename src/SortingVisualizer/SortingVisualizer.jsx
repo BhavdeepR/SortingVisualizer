@@ -1,12 +1,12 @@
 import React from 'react';
-import {doInsertionSort, getMergeSortAnimations} from '../sortingAlgorithms/sortingAlgorithms.js';
+import {doInsertionSort, doQuickSort, getMergeSortAnimations} from '../sortingAlgorithms/sortingAlgorithms.js';
 import './SortingVisualizer.css';
 
 // Change this value for the speed of the animations.
-const ANIMATION_SPEED_MS = 1;
+//const ANIMATION_SPEED_MS = 1;
 
 // Change this value for the number of bars (value) in the array.
-const NUMBER_OF_ARRAY_BARS = 200;
+//const NUMBER_OF_ARRAY_BARS = 175;
 
 // This is the main color of the array bars.
 const PRIMARY_COLOR = 'turquoise';
@@ -20,6 +20,9 @@ export default class SortingVisualizer extends React.Component {
 
     this.state = {
       array: [],
+      animationSpeed: 1,
+      arraySize: 200,
+      isSorting: false,
     };
   }
 
@@ -28,15 +31,23 @@ export default class SortingVisualizer extends React.Component {
   }
 
   resetArray() {
+    if(this.state.isSorting){return};
+
+    const { arraySize } = this.state;
     const array = [];
-    for (let i = 0; i < NUMBER_OF_ARRAY_BARS; i++) {
-      array.push(randomIntFromInterval(5, 730));
+    for (let i = 0; i < arraySize; i++) {
+      array.push(randomIntFromInterval(5, 600));
     }
-    this.setState({array});
+    this.setState({ array });
   }
 
+  
+
   mergeSort() {
-    const animations = getMergeSortAnimations(this.state.array);
+    //if(this.state.isSorting) return;
+    //this.setState({ isSorting: true })
+    const { array, animationSpeed } = this.state;
+    const animations = getMergeSortAnimations(array);
     // iterate through earch of the two element arrays in animations array
     for (let i = 0; i < animations.length; i++) {
       // these are the array bars that are being displayed
@@ -53,7 +64,7 @@ export default class SortingVisualizer extends React.Component {
         setTimeout(() => {
           barOneStyle.backgroundColor = color;
           barTwoStyle.backgroundColor = color;
-        }, i * ANIMATION_SPEED_MS);
+        }, i * animationSpeed);
         //change the color and wait the given time to change back
       } else {
         //this code is to change the height of the next array bar with the given height
@@ -61,17 +72,29 @@ export default class SortingVisualizer extends React.Component {
           const [barOneIdx, newHeight] = animations[i];
           const barOneStyle = arrayBars[barOneIdx].style;
           barOneStyle.height = `${newHeight}px`;
-        }, i * ANIMATION_SPEED_MS);
+        }, i * animationSpeed);
       }
     }
+    //this.setState({ isSorting: false });
   }
 
-  quickSort() {
+  async quickSort() {
   
+    const {array, animationSpeed} = this.state;
+    const arrayBars = document.getElementsByClassName('array-bar');
+
+    let animations = doQuickSort(array);
+    await animate(animations, animationSpeed, arrayBars)
+    console.log(array);
   }
+  
 
   insertionSort() {
-    const animations = doInsertionSort(this.state.array);
+    //if(this.state.isSorting) return;
+    //this.setState({ isSorting: true });
+
+    const { array, animationSpeed } = this.state;
+    const animations = doInsertionSort(array);
     // iterate through earch of the two element arrays in animations array
     for (let i = 0; i < animations.length; i++) {
       // these are the array bars that are being displayed
@@ -88,7 +111,7 @@ export default class SortingVisualizer extends React.Component {
         setTimeout(() => {
           barOneStyle.backgroundColor = color;
           barTwoStyle.backgroundColor = color;
-        }, i * ANIMATION_SPEED_MS);
+        }, i * animationSpeed);
         //change the color and wait the given time to change back
       } else {
         //this code is to change the height of the next array bar with the given height
@@ -99,32 +122,29 @@ export default class SortingVisualizer extends React.Component {
           barOneStyle.height = `${barOneHeight}px`;
           barTwoStyle.height = `${barTwoHeight}px`;
 
-        }, i * ANIMATION_SPEED_MS);
+        }, i * animationSpeed);
       }
     }
+    //this.setState({ isSorting: false });
   }
 
+  handleSpeedChange(event) {
+    const speed = parseInt(event.target.value);
+    this.setState({ animationSpeed: speed });
+  }
 
-  // NOTE: This method will only work if your sorting algorithms actually return
-  // the sorted arrays; if they return the animations (as they currently do), then
-  // this method will be broken.
-  testSortingAlgorithms() {
-    for (let i = 0; i < 100; i++) {
-      const array = [];
-      const length = randomIntFromInterval(1, 1000);
-      for (let i = 0; i < length; i++) {
-        array.push(randomIntFromInterval(-1000, 1000));
-      }
-      const javaScriptSortedArray = array.slice().sort((a, b) => a - b);
-      const mergeSortedArray = getMergeSortAnimations(array.slice());
-      console.log(arraysAreEqual(javaScriptSortedArray, mergeSortedArray));
-    }
+  handleSizeChange(event) {
+    const size = parseInt(event.target.value);
+    this.setState({ arraySize: size }, () => {
+      this.resetArray();
+    });
   }
 
   render() {
-    const {array} = this.state;
+    const {array, isSorting} = this.state;
 
     return (
+      <div className='parent-container'>
       <div className="array-container">
         {array.map((value, idx) => (
           <div
@@ -133,13 +153,47 @@ export default class SortingVisualizer extends React.Component {
             style={{
               backgroundColor: PRIMARY_COLOR,
               height: `${value}px`,
-            }}></div>
+            }}
+          ></div>
         ))}
-        <button onClick={() => this.resetArray()}>Generate New Array</button>
-        <button onClick={() => this.mergeSort()}>Merge Sort</button>
-        <button onClick={() => this.quickSort()}>Quick Sort</button>
-        <button onClick={() => this.insertionSort()}>Insertion Sort</button>
       </div>
+      <div className="button-container">
+        <button onClick={() => this.resetArray()} disabled={isSorting}>
+          Generate New Array
+        </button>
+        <button onClick={() => this.mergeSort()} disabled={isSorting}>
+          Merge Sort
+        </button>
+        <button onClick={() => this.quickSort()} disabled={isSorting}>
+          Quick Sort
+        </button>
+        <button onClick={() => this.insertionSort()} disabled={isSorting}>
+          Insertion Sort
+        </button>
+        <div>
+          <label>Animation Speed:</label>
+          <input
+            type="range"
+            min="1"
+            max="100"
+            value={this.state.animationSpeed}
+            onChange={(event) => this.handleSpeedChange(event)}
+          />
+        </div>
+        <div>
+          <label>Array Size:</label>
+          <input
+            type="range"
+            min="10"
+            max="250"
+            value={this.state.arraySize}
+            onChange={(event) => this.handleSizeChange(event)}
+          />
+        </div>
+      </div>
+    </div>
+    
+
     );
   }
 }
@@ -150,12 +204,46 @@ function randomIntFromInterval(min, max) {
   return Math.floor(Math.random() * (max - min + 1) + min);
 }
 
-function arraysAreEqual(arrayOne, arrayTwo) {
-  if (arrayOne.length !== arrayTwo.length) return false;
-  for (let i = 0; i < arrayOne.length; i++) {
-    if (arrayOne[i] !== arrayTwo[i]) {
-      return false;
+// function arraysAreEqual(arrayOne, arrayTwo) {
+//   if (arrayOne.length !== arrayTwo.length) return false;
+//   for (let i = 0; i < arrayOne.length; i++) {
+//     if (arrayOne[i] !== arrayTwo[i]) {
+//       return false;
+//     }
+//   }
+//   return true;
+// }
+
+async function animate(animations, animationSpeed, arrayBars){
+  for(let animation of animations) {
+    const [barOneIdx, barTwoIdx] = animation.indices;
+    const barOneStyle = arrayBars[barOneIdx].style;
+    const barTwoStyle = arrayBars[barTwoIdx].style;
+    switch(animation.type) {
+      case "compare":
+
+        const color = barOneStyle.background==='red' ? 'turqoise' : 'red';
+
+        barOneStyle.backgroundColor = color;
+        barTwoStyle.backgroundColor = color;
+        
+        break;
+      case "swap":
+        const [barOneHeight, barTwoHeight] = animation.heights;
+
+        barOneStyle.height = `${barOneHeight}px`;
+        barTwoStyle.height = `${barTwoHeight}px`;
+        break;
     }
+    await sleep(animationSpeed);
   }
-  return true;
+  for(let bar of arrayBars){
+    bar.style.backgroundColor = 'lime';
+    await sleep(2);
+  }
 }
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+

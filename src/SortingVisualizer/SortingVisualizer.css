@@ -1,12 +1,31 @@
-.array-container {
-    position: absolute;
-    left: 100px;
+.parent-container {
+height: 100%
 }
+
+
+.array-container {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: center;
+    height: 610px; /* Adjust the height as needed */
+    overflow: hidden;
+    margin: 0 auto;
+    width: 80%
+  }
+  
+  .button-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 10px; /* Adjust the margin as needed */
+  }
 
 .array-bar {
     background-color: aquamarine;
     display: inline-block;
     width: 2px;
     margin: 0 1px;
+    flex-grow: 1;
 
 }
