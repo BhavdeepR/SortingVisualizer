@@ -38,20 +38,27 @@ export default class SortingVisualizer extends React.Component {
     for (let i = 0; i < arraySize; i++) {
       array.push(randomIntFromInterval(5, 600));
     }
+
+    const arrayBars = document.getElementsByClassName('array-bar');
+    for (let i = 0; i < arrayBars.length; i++) {
+      arrayBars[i].style.backgroundColor = PRIMARY_COLOR;
+    }
+
     this.setState({ array });
   }
 
   
 
-  mergeSort() {
-    //if(this.state.isSorting) return;
-    //this.setState({ isSorting: true })
+  async mergeSort() {
+    if(this.state.isSorting) return;
+    this.setState({ isSorting: true })
     const { array, animationSpeed } = this.state;
-    const animations = getMergeSortAnimations(array);
+    const animations = getMergeSortAnimations([...array]);
+    const arrayBars = document.getElementsByClassName('array-bar');
+
     // iterate through earch of the two element arrays in animations array
     for (let i = 0; i < animations.length; i++) {
       // these are the array bars that are being displayed
-      const arrayBars = document.getElementsByClassName('array-bar');
       // for each comparison, three arrays are push into animations array, the first two are for
       // color changes, the third is two update the index
       const isColorChange = i % 3 !== 2;
@@ -61,71 +68,52 @@ export default class SortingVisualizer extends React.Component {
         const barTwoStyle = arrayBars[barTwoIdx].style;
         //change the color of the array bars to show comparison and then change them back
         const color = i % 3 === 0 ? SECONDARY_COLOR : PRIMARY_COLOR;
-        setTimeout(() => {
-          barOneStyle.backgroundColor = color;
-          barTwoStyle.backgroundColor = color;
-        }, i * animationSpeed);
+        barOneStyle.backgroundColor = color;
+        barTwoStyle.backgroundColor = color;
+        await sleep(animationSpeed);
         //change the color and wait the given time to change back
       } else {
         //this code is to change the height of the next array bar with the given height
-        setTimeout(() => {
-          const [barOneIdx, newHeight] = animations[i];
-          const barOneStyle = arrayBars[barOneIdx].style;
-          barOneStyle.height = `${newHeight}px`;
-        }, i * animationSpeed);
+        const [barOneIdx, newHeight] = animations[i];
+        const barOneStyle = arrayBars[barOneIdx].style;
+        barOneStyle.height = `${newHeight}px`;
+        await sleep(animationSpeed);
       }
     }
-    //this.setState({ isSorting: false });
+    for(let bar of arrayBars){
+      bar.style.backgroundColor = 'lime';
+      await sleep(2);
+    }
+    this.setState({ isSorting: false });
   }
 
   async quickSort() {
+    if(this.state.isSorting) return;
+    this.setState({ isSorting: true })
   
     const {array, animationSpeed} = this.state;
     const arrayBars = document.getElementsByClassName('array-bar');
 
-    let animations = doQuickSort(array);
-    await animate(animations, animationSpeed, arrayBars)
+    let animations = doQuickSort([...array]);
+    await animate(animations, animationSpeed, arrayBars);
     console.log(array);
+
+    this.setState({ isSorting: false });
   }
   
 
-  insertionSort() {
-    //if(this.state.isSorting) return;
-    //this.setState({ isSorting: true });
+  async insertionSort() {
+    if(this.state.isSorting) return;
+    this.setState({ isSorting: true });
 
     const { array, animationSpeed } = this.state;
-    const animations = doInsertionSort(array);
-    // iterate through earch of the two element arrays in animations array
-    for (let i = 0; i < animations.length; i++) {
-      // these are the array bars that are being displayed
-      const arrayBars = document.getElementsByClassName('array-bar');
-      // for each comparison, three arrays are push into animations array, the first two are for
-      // color changes, the third is two update the index
-      const isColorChange = i % 3 !== 2;
-      if (isColorChange) {
-        const [barOneIdx, barTwoIdx] = animations[i];
-        const barOneStyle = arrayBars[barOneIdx].style;
-        const barTwoStyle = arrayBars[barTwoIdx].style;
-        //change the color of the array bars to show comparison and then change them back
-        const color = i % 3 === 0 ? SECONDARY_COLOR : PRIMARY_COLOR;
-        setTimeout(() => {
-          barOneStyle.backgroundColor = color;
-          barTwoStyle.backgroundColor = color;
-        }, i * animationSpeed);
-        //change the color and wait the given time to change back
-      } else {
-        //this code is to change the height of the next array bar with the given height
-        setTimeout(() => {
-          const [barOneIdx, barOneHeight, barTwoIdx, barTwoHeight] = animations[i];
-          const barOneStyle = arrayBars[barOneIdx].style;
-          const barTwoStyle = arrayBars[barTwoIdx].style;
-          barOneStyle.height = `${barOneHeight}px`;
-          barTwoStyle.height = `${barTwoHeight}px`;
+    const arrayBars = document.getElementsByClassName('array-bar');
 
-        }, i * animationSpeed);
-      }
-    }
-    //this.setState({ isSorting: false });
+
+    let animations = doInsertionSort([...array]);
+    await animate(animations, animationSpeed, arrayBars);
+
+    this.setState({ isSorting: false });
   }
 
   handleSpeedChange(event) {
@@ -173,11 +161,14 @@ export default class SortingVisualizer extends React.Component {
         <div>
           <label>Animation Speed:</label>
           <input
+            className='range'
             type="range"
             min="1"
-            max="100"
+            max="50"
             value={this.state.animationSpeed}
-            onChange={(event) => this.handleSpeedChange(event)}
+            disabled={isSorting}
+            onChange={(event) => this.handleSpeedChange(event)
+            }
           />
         </div>
         <div>
@@ -187,6 +178,7 @@ export default class SortingVisualizer extends React.Component {
             min="10"
             max="250"
             value={this.state.arraySize}
+            disabled={isSorting}
             onChange={(event) => this.handleSizeChange(event)}
           />
         </div>
@@ -222,26 +214,33 @@ async function animate(animations, animationSpeed, arrayBars){
     switch(animation.type) {
       case "compare":
 
-        const color = barOneStyle.background==='red' ? 'turqoise' : 'red';
+        const color = barOneStyle.backgroundColor==='turquoise' ? 'red' : 'turquoise';
 
         barOneStyle.backgroundColor = color;
         barTwoStyle.backgroundColor = color;
         
         break;
       case "swap":
-        const [barOneHeight, barTwoHeight] = animation.heights;
+        if(animation.indices.length > 1){
+          const [barOneHeight, barTwoHeight] = animation.heights;
 
-        barOneStyle.height = `${barOneHeight}px`;
-        barTwoStyle.height = `${barTwoHeight}px`;
+          barOneStyle.height = `${barOneHeight}px`;
+          barTwoStyle.height = `${barTwoHeight}px`;
+        }else{
+          const [barOneHeight] = animation.heights;
+
+          barOneStyle.height = `${barOneHeight}px`;
+        }
         break;
+      default:
+      }
+      await sleep(animationSpeed);
     }
-    await sleep(animationSpeed);
+    for(let bar of arrayBars){
+      bar.style.backgroundColor = 'lime';
+      await sleep(2);
+    }
   }
-  for(let bar of arrayBars){
-    bar.style.backgroundColor = 'lime';
-    await sleep(2);
-  }
-}
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));

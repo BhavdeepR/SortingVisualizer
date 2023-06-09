@@ -83,12 +83,13 @@ export function doInsertionSort (array) {
   for (let i = 0; i < array.length; i++){
     for(let j = i; j > 0; j--){
       if(array[j] < array[j-1]){
-        animations.push([j, j-1])
-        animations.push([j, j-1])
+        animations.push({type: "compare", indices: [j, j-1]});
+        animations.push({type: "compare", indices: [j, j-1]});
+        
         let temp = array[j-1];
         array[j-1] = array[j];
         array[j] = temp;
-        animations.push([j, array[j], j-1, array[j-1]])
+        animations.push({type: "swap", indices: [j, j-1], heights: [array[j], array[j-1]]})
       }
     }
 
